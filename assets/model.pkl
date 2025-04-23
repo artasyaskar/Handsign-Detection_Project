@@ -7,7 +7,7 @@ from pathlib import Path
 
 # Configuration (you can modify these based on your dataset)
 IMG_SIZE = 300  # Size of the image used for training
-CLASSES = ["A", "B", "C", "D", "E"]  # Replace with your actual hand sign classes
+CLASSES = ["peace", "fist", "thumbs_up", "stop", "ok"]
 SAMPLES_PER_CLASS = 50  # Number of images per class
 
 # Create synthetic data or load your dataset here
