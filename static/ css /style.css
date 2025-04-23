@@ -1,0 +1,105 @@
+/* General body style */
+body {
+  background-color: #0f0f0f;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* App container */
+.main-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: auto;
+}
+
+/* Headings */
+h1, h2, h3 {
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+}
+
+/* Webcam and video output container */
+.video-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-frame {
+  border: 3px solid #444;
+  border-radius: 12px;
+  margin-top: 1rem;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.video-frame:hover {
+  box-shadow: 0 0 25px rgba(0, 200, 255, 0.4);
+}
+
+/* Output Text */
+.output-box {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1rem 2rem;
+  margin-top: 2rem;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  color: #00ffe4;
+  font-weight: bold;
+  text-align: center;
+  transition: 0.3s ease;
+}
+
+/* Buttons */
+button {
+  background-color: #0096ff;
+  color: #fff;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 0.5rem;
+  transition: all 0.2s ease-in-out;
+}
+
+button:hover {
+  background-color: #0077cc;
+  transform: scale(1.05);
+}
+
+/* Footer */
+footer {
+  margin-top: 3rem;
+  padding: 1rem;
+  text-align: center;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .main-container {
+    padding: 1rem;
+  }
+
+  .video-frame {
+    width: 90%;
+  }
+
+  .output-box {
+    font-size: 1rem;
+  }
+
+  button {
+    width: 100%;
+    padding: 0.8rem;
+  }
+}
