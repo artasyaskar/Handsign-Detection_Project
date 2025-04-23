@@ -1,26 +1,39 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hand Sign Detection</title>
-  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="stylesheet" href="static/css/style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>🤖 Real-Time Hand Sign Detection</h1>
-    <p>This AI-powered app detects hand signs from your webcam feed and estimates the distance of your hand from the camera.</p>
-    
-    <ul class="features">
-      <li>🖐️ Recognizes universal hand signs like Peace, Fist, Thumbs Up, and more</li>
-      <li>📏 Estimates hand-to-camera distance in real-time</li>
-      <li>🎯 Powered by OpenCV, MediaPipe, and a trained ML model</li>
-      <li>⚡ Deployed with Streamlit for instant accessibility</li>
-    </ul>
+  <header class="header">
+    <h1>✋ AI Hand Sign Detector</h1>
+    <button id="theme-toggle" class="theme-btn">🌙 Toggle Theme</button>
+  </header>
 
-    <a href="/app" class="btn">Launch the App</a>
-    <p class="note">Built with ❤️ by Artas Yaskar</p>
-  </div>
-  <script src="/static/js/script.js"></script>
+  <main class="main-content">
+    <section class="video-section">
+      <h2>Live Detection</h2>
+      <p>Webcam will open automatically via Streamlit.</p>
+      <div class="video-placeholder">🎥 Streamlit Video Here</div>
+    </section>
+
+    <section class="info-section">
+      <h3>Detected Sign:</h3>
+      <p id="detected-sign">Waiting for input...</p>
+
+      <h3>Estimated Distance:</h3>
+      <p id="estimated-distance">-- cm</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 HandSign-AI | Built with ❤️ by Artas Yaskar</p>
+  </footer>
+
+  <div id="alert-box" class="alert-box" style="display:none;"></div>
+  <script src="static/js/script.js"></script>
 </body>
 </html>
