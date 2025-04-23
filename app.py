@@ -27,7 +27,7 @@ def local_js(js_file):
         st.warning(f"⚠️ JavaScript file not found: {js_file}")
 
 # Define hand sign classes
-CLASSES = ["peace", "fist", "thumbs_up", "stop", "ok", "call_me", "victory", "rock_on", "open_hand", "closed_hand"]
+CLASSES = ["peace", "fist", "thumbs_up", "stop", "ok"]
 
 
 # Estimate distance from camera based on hand area (very basic estimate)
