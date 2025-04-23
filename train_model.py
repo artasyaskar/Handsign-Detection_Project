@@ -6,7 +6,7 @@ from pathlib import Path
 
 # Configuration (Modify these based on your dataset)
 IMG_SIZE = 300  # Image size must match app.py
-CLASSES = ["A", "B", "C", "D", "E"]  # Replace with your hand sign classes
+CLASSES = ["peace", "fist", "thumbs_up", "stop", "ok", "call_me", "victory", "rock_on", "open_hand", "closed_hand"]
 SAMPLES_PER_CLASS = 50  # Number of training samples per class
 
 def create_dummy_data():
