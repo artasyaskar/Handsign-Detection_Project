@@ -1,5 +1,4 @@
 from flask import Flask, render_template, Response, jsonify, request
-from flask_socketio import SocketIO, emit
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -8,8 +7,6 @@ from datetime import datetime
 import json
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key'
-socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Initialize MediaPipe Hands
 mp_hands = mp.solutions.hands
@@ -114,9 +111,6 @@ def export_log():
     )
 
 if __name__ == '__main__':
-    # Create necessary directories
-    os.makedirs('logs', exist_ok=True)
-    os.makedirs('static/images', exist_ok=True)
-    
-    # Run the app
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    # Run the app for local development
+    # Vercel will use a WSGI server and not this block
+    app.run(debug=True, host='0.0.0.0', port=5000)
