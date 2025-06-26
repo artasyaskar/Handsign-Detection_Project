@@ -17,9 +17,6 @@ let isProcessing = false;
 let detectionCount = 0;
 let lastGesture = null;
 
-// Initialize Socket.IO
-const socket = io();
-
 // Event Listeners
 startButton.addEventListener('click', startWebcam);
 stopButton.addEventListener('click', stopWebcam);
