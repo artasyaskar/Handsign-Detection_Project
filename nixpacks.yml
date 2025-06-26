@@ -1,3 +1,0 @@
-image: python:3.10
-dependencies:
-  - libgl1-mesa-glx
