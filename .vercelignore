@@ -1,0 +1,21 @@
+# Ignore Git files
+.git/
+.gitignore
+
+# Ignore documentation and local logs
+README.md
+logs/
+
+# Ignore unused large model files (as a precaution)
+*.h5
+*.pth
+
+# Ignore Python cache and virtual environments
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+ENV/
+env/
+pip-cache/
