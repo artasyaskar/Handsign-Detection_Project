@@ -1,3 +1,4 @@
+
 // DOM Elements
 const video = document.getElementById('webcam');
 const canvas = document.getElementById('output');
@@ -8,7 +9,6 @@ const exportButton = document.getElementById('exportLog');
 const gestureOverlay = document.getElementById('gesture-overlay');
 const distanceOverlay = document.getElementById('distance-overlay');
 const gestureHistory = document.getElementById('gesture-history');
-const totalDetections = document.getElementById('total-detections');
 const currentGesture = document.getElementById('current-gesture');
 
 // State
@@ -113,16 +113,8 @@ async function processVideo() {
 
 function updateUI(result) {
     // Update gesture overlay
-    if (result.gesture && result.gesture !== lastGesture) {
+    if (result.gesture) {
         gestureOverlay.textContent = result.gesture;
-        lastGesture = result.gesture;
-        
-        // Add to history
-        addToHistory(result);
-        
-        // Update detection count
-        detectionCount++;
-        totalDetections.textContent = detectionCount;
     }
     
     // Update distance overlay
@@ -130,10 +122,13 @@ function updateUI(result) {
         distanceOverlay.textContent = `Distance: ${result.distance} cm`;
     }
     
-    // Update current gesture
-    if (result.gesture) {
-        currentGesture.textContent = result.gesture;
+    // Add to history if it's a new gesture or significant change
+    if (result.gesture && result.gesture !== lastGesture) {
+        addToHistory(result);
+        lastGesture = result.gesture;
     }
+    
+    detectionCount++;
 }
 
 function addToHistory(result) {
@@ -177,7 +172,6 @@ function exportLog() {
     window.location.href = '/export-log';
 }
 
-// Initialize UI
 function init() {
     stopButton.disabled = true;
     
