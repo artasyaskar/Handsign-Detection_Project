@@ -1,8 +1,6 @@
-# fly.toml file generated for a Flask app with Dockerfile
 
-# Replace 'your-app-name' with the unique name of your app on Fly.io
-# This will be set when you run `flyctl launch`
-app = "handsignvision-app" # Placeholder, will be updated by `flyctl launch`
+app = "handsign-detection-app"
+ # Placeholder, will be updated by `flyctl launch`
 primary_region = "iad"     # Placeholder, choose your primary region during `flyctl launch`
 
 # Instruct Fly.io to build using the Dockerfile in the current directory
