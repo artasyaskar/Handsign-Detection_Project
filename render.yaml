@@ -1,0 +1,11 @@
+# render.yaml for deploying the Handsign Detection Flask app using Docker
+
+services:
+  - type: web # Specifies this is a web service
+    name: handsign-detection # Name of your service on Render
+    env: docker # Use Docker runtime
+    # Dockerfile path is implicitly ./Dockerfile
+    # Docker context path is implicitly .
+    plan: free # Specifies the instance plan (e.g., free, starter). Free plans spin down.
+    healthCheckPath: /health # Path Render uses to check if the service is healthy
+    
