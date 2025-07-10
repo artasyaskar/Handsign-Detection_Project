@@ -1,5 +1,5 @@
 
-app = "handsign-detection-app"
+app = "Handsign-detection-app"
  # Placeholder, will be updated by `flyctl launch`
 primary_region = "iad"     # Placeholder, choose your primary region during `flyctl launch`
 
