@@ -32,12 +32,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Expose the port the app runs on (Railway will set this via PORT env var)
-# Defaulting to 5000 if PORT is not set, consistent with app.py
-EXPOSE 5000
+# Expose the port the app runs on. Fly.io will provide a PORT environment variable (typically 8080),
+# which Gunicorn will use. This EXPOSE line is more for documentation.
+EXPOSE 8080
 
 # Command to run the application using Gunicorn
-# Railway provides the PORT environment variable. Gunicorn will listen on this port.
+# Fly.io provides the PORT environment variable. Gunicorn will listen on this port.
 # The number of workers can be adjusted based on the resources available on Railway.
 # For now, using a default of 2 workers.
 # The --timeout flag can be important for longer processing tasks if your /detect endpoint takes time.
