@@ -1,118 +1,113 @@
 # HandsignVision
 
-An AI-powered web application for real-time hand gesture detection and distance estimation using computer vision.
+An AI-powered web application for real-time hand gesture detection and distance estimation using computer vision. Upload images and see the results!
 
 ## Features
 
-- Real-time hand gesture detection using MediaPipe
-- Hand distance estimation from the camera
-- Gesture history with timestamps
+- Hand gesture detection from uploaded images using MediaPipe
+- Hand distance estimation (simplified)
+- Gesture history with timestamps for the current session
 - Export gesture logs to CSV
-- Modern, responsive UI with dark theme
-- WebRTC for browser-based camera access
+- Clean and responsive user interface
 
-## Prerequisites
+## Core Technologies
 
-- Python 3.8+
+- **Backend:** Python, Flask
+- **Computer Vision:** OpenCV, MediaPipe
+- **Frontend:** HTML, CSS, JavaScript
+- **Deployment:** Docker, Railway
+
+## Prerequisites for Local Development
+
+- Python 3.9+
 - pip (Python package manager)
-- Modern web browser with WebRTC support (Chrome, Firefox, Edge)
-- Webcam
+- A modern web browser
 
-## Installation
+## Local Development Setup
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd Handsign_Detection.Project
-   ```
+1.  **Clone the repository:**
+    ```bash
+    git clone <your-repository-url>
+    cd <your-repository-folder>
+    ```
 
-2. Create a virtual environment (recommended):
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: .\\venv\\Scripts\\activate
-   ```
+2.  **Create and activate a virtual environment (recommended):**
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+    ```
 
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+3.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-## Running the Application
+4.  **Run the Flask development server:**
+    ```bash
+    python app.py
+    ```
+    The application will be accessible at `http://127.0.0.1:5000`.
 
-### Development Mode
+## Running with Docker Locally
 
-1. Start the Flask development server:
-   ```bash
-   python app.py
-   ```
+This project includes a `Dockerfile` for containerized deployment.
 
-2. Open your web browser and navigate to:
-   ```
-   http://localhost:5000
-   ```
+1.  **Build the Docker image:**
+    ```bash
+    docker build -t handsignvision .
+    ```
 
-### Using Docker
+2.  **Run the Docker container:**
+    ```bash
+    # The application inside Docker will run on the port specified by the PORT env var (default 5000 in app.py)
+    # We map port 5000 on the host to the container's application port.
+    docker run -p 5000:5000 -e PORT=5000 handsignvision
+    ```
+    The application will be accessible at `http://localhost:5000`.
+    *(Note: The `-e PORT=5000` is set to match how Gunicorn expects the port inside the container for local testing here. Railway will supply this automatically during deployment.)*
 
-1. Build the Docker image:
-   ```bash
-   docker build -t handsignvision .
-   ```
+## Deployment to Railway
 
-2. Run the container:
-   ```bash
-   docker run -p 5000:5000 --device=/dev/video0 handsignvision
-   ```
+This application is configured for easy deployment to [Railway](https://railway.app/).
 
-3. Open your web browser and navigate to:
-   ```
-   http://localhost:5000
-   ```
+1.  **Push your code to a GitHub repository.**
+2.  **On Railway:**
+    *   Create a new project and connect it to your GitHub repository.
+    *   Railway should automatically detect the `Dockerfile`.
+    *   Railway will build the Docker image and deploy the application.
+    *   A public URL will be provided to access your deployed application.
+3.  **Environment Variables:**
+    *   Railway automatically injects a `PORT` variable, which the application uses. No manual configuration of `PORT` is typically needed in Railway's settings for this project.
+
+Refer to the `Dockerfile` and `railway.json` for deployment configurations.
 
 ## Project Structure
 
-```
-HandsignVision/
-├── static/               # Static files (CSS, JS, images)
-│   ├── css/
-│   └── js/
-├── templates/            # HTML templates
-├── app.py                # Main application file
-├── requirements.txt      # Python dependencies
-└── Dockerfile            # Docker configuration
-```
+. ├── static/ # Static files (CSS, JS) │ ├── css/styles.css │ └── js/main.js ├── templates/ # HTML templates (index.html) ├── app.py # Main Flask application file ├── requirements.txt # Python dependencies ├── Dockerfile # Docker configuration for Railway/local ├── railway.json # Railway deployment configuration └── README.md # This file
 
-## Usage
 
-1. Click "Start Camera" to begin capturing video from your webcam.
-2. Show your hand to the camera to detect gestures.
-3. View detected gestures and hand distance in the interface.
-4. Use the "Export Log" button to download a CSV of detected gestures.
+## How it Works
+
+1.  The user uploads an image through the web interface.
+2.  The Flask backend receives the image.
+3.  OpenCV and MediaPipe process the image to detect hand landmarks.
+4.  A simple gesture recognition logic determines the gesture.
+5.  Results (gesture, distance, landmarks) are sent back to the frontend and displayed.
+6.  Detected gestures are logged and can be exported.
 
 ## Customization
 
-### Adding New Gestures
+### Gesture Logic
 
-To add new gesture detection:
-
-1. Modify the `detect_gesture()` function in `app.py` to recognize new hand landmarks patterns.
-2. Add corresponding UI elements in `templates/index.html` if needed.
+- Modify the `detect_gesture()` function in `app.py` to change or enhance gesture recognition.
 
 ### Styling
 
-Customize the look and feel by modifying the CSS in `static/css/styles.css`.
+- Customize the look and feel by modifying `static/css/styles.css` and `templates/index.html`.
 
 ## Troubleshooting
 
-- **Webcam not working**: Ensure you've granted camera permissions in your browser.
-- **Installation issues**: Make sure all dependencies are installed correctly.
-- **Performance issues**: Try reducing the video resolution in the code for better performance.
+- **Deployment Issues on Railway:** Check the build and deployment logs on Railway for any errors. Ensure system dependencies in the `Dockerfile` are correctly installed.
+- **Local Docker Issues:** Ensure Docker Desktop (or your Docker environment) is running.
+- **Python Dependencies:** If `pip install` fails, check for error messages; it might indicate missing system prerequisites for a package (though the `Dockerfile` aims to cover these for deployment).
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- [MediaPipe](https://mediapipe.dev/) for hand tracking
-- [Flask](https://flask.palletsprojects.com/) for the web framework
-- [Tailwind CSS](https://tailwindcss.com/) for styling
