@@ -15,7 +15,7 @@ An AI-powered web application for hand gesture detection from uploaded images us
 - **Backend:** Python, Flask
 - **Computer Vision:** OpenCV, MediaPipe
 - **Frontend:** HTML, CSS, JavaScript
-- **Deployment:** Docker, Fly.io
+- **Deployment:** Docker, Render
 
 ## Prerequisites for Local Development
 
@@ -60,51 +60,47 @@ This project includes a `Dockerfile` for containerized deployment.
 2.  **Run the Docker container:**
     ```bash
     # The application inside Docker will listen on the port specified by the PORT env var.
-    # Gunicorn in the Dockerfile uses $PORT, which defaults to 5000 in app.py if not set.
-    # For local testing to mimic Fly.io's typical internal port, you can use 8080:
-    docker run -p 8080:8080 -e PORT=8080 handsignvision
-    ```
-    The application will then be accessible at `http://localhost:8080`.
-    If you prefer to use port 5000 locally:
-    ```bash
+    # Gunicorn in the Dockerfile uses $PORT.
+    # For local testing, you can set this to any port, e.g., 5000 or 8080.
     docker run -p 5000:5000 -e PORT=5000 handsignvision
     ```
-    And access it at `http://localhost:5000`.
-
-## Deployment to Fly.io
-
-This application is configured for deployment to [Fly.io](https://fly.io/) using its `flyctl` command-line tool.
-
-1.  **Install `flyctl`:**
-    Follow the instructions on the [Fly.io website](https://fly.io/docs/hands-on/install-flyctl/).
-
-2.  **Log in to Fly.io:**
+    The application will then be accessible at `http://localhost:5000`.
+    Or, if you prefer to use port 8080 locally:
     ```bash
-    flyctl auth login
+    docker run -p 8080:8080 -e PORT=8080 handsignvision
     ```
+    And access it at `http://localhost:8080`. Render will provide its own `PORT` variable during deployment.
 
-3.  **Launch the app (first-time deployment):**
-    Navigate to your project directory in the terminal and run:
-    ```bash
-    flyctl launch
-    ```
-    This command will:
-    *   Prompt you to choose an application name (e.g., `handsignvision-app` or your own unique name). This will update the `app` field in `fly.toml`.
-    *   Ask you to select an organization and a primary region for deployment.
-    *   Detect the `Dockerfile` and `fly.toml`. It might ask if you want to copy the existing `fly.toml` settings.
-    *   Optionally, it can provision a PostgreSQL database (select "No" if not needed for this app) and set up a Redis database (select "No").
-    *   It will then attempt the first deployment.
+## Deployment to Render
 
-4.  **Deploy Changes:**
-    After the initial launch, to deploy subsequent changes you've pushed to your repository:
-    ```bash
-    flyctl deploy
-    ```
+This application can be deployed to [Render](https://render.com/) using its Git integration and Docker support. The `render.yaml` file in this repository can be used for "Blueprint" deployments.
 
-5.  **Access Your Application:**
-    Once deployed, `flyctl status` or `flyctl open` will show you the public URL of your application (e.g., `https://your-app-name.fly.dev`).
+**Steps to Deploy:**
 
-Refer to the `Dockerfile` and `fly.toml` for deployment configurations. The `fly.toml` file specifies health checks and how HTTP/HTTPS traffic is handled.
+1.  **Push your code to a GitHub (or GitLab) repository.**
+
+2.  **On Render Dashboard:**
+    *   Sign up or log in to Render.
+    *   Click "New +" and select "Blueprint".
+    *   Connect your GitHub/GitLab account and select the repository for this project.
+    *   Render will detect the `render.yaml` file. Review the services it plans to create.
+    *   Click "Approve" or "Create New Services".
+    *   Alternatively, you can create a "New Web Service" manually:
+        *   Connect your repository.
+        *   Choose a unique name for your service.
+        *   Set the Environment to "Docker".
+        *   Select a region.
+        *   Choose an instance type (e.g., "Free").
+        *   Under "Advanced Settings", you might need to set a Health Check Path to `/health`.
+        *   Click "Create Web Service".
+
+3.  **Automatic Deployments:**
+    *   Render can automatically build and deploy your application when you push changes to your connected repository branch (typically `main`).
+
+4.  **Access Your Application:**
+    *   Once deployed, Render will provide you with a public URL (e.g., `https://your-service-name.onrender.com`).
+
+Refer to the `Dockerfile` and `render.yaml` for deployment configurations. Render injects a `PORT` environment variable which Gunicorn uses.
 
 ## Project Structure
 
@@ -116,8 +112,8 @@ Refer to the `Dockerfile` and `fly.toml` for deployment configurations. The `fly
 ├── templates/            # HTML templates (index.html)
 ├── app.py                # Main Flask application file
 ├── requirements.txt      # Python dependencies
-├── Dockerfile            # Docker configuration for Fly.io/local
-├── fly.toml              # Fly.io deployment configuration
+├── Dockerfile            # Docker configuration for Render/local
+├── render.yaml           # Render Blueprint configuration
 └── README.md             # This file
 ```
 
@@ -140,9 +136,9 @@ Refer to the `Dockerfile` and `fly.toml` for deployment configurations. The `fly
 
 ## Troubleshooting
 
-- **Deployment Issues on Fly.io:** Check the build logs using `flyctl logs` or in the Fly.io dashboard. Ensure system dependencies in the `Dockerfile` are correctly installed. The `fly.toml` health checks also provide insights into app health.
+- **Deployment Issues on Render:** Check the build and deployment logs in the Render dashboard for your service. Ensure system dependencies in the `Dockerfile` are correctly installed. Verify the Health Check Path is correctly set if not using `render.yaml`.
 - **Local Docker Issues:** Ensure Docker Desktop (or your Docker environment) is running.
-- **`flyctl launch` issues:** If `flyctl launch` has trouble detecting settings, ensure `fly.toml` is present or allow `flyctl` to generate a new one and then compare/merge if necessary.
+- **Free Tier Limitations on Render:** Free web services on Render spin down due to inactivity and may take some time to restart on a new request. They also have usage limits.
 
 ## License
 
