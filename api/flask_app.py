@@ -1,5 +1,6 @@
 from flask import Flask, render_template, Response, jsonify, request
-import cv2
+from PIL import Image
+import io
 import mediapipe as mp
 import numpy as np
 import os
@@ -10,11 +11,13 @@ import json
 app = Flask(__name__)
 
 # Initialize MediaPipe Hands
-# Note: Vercel's serverless environment is stateless. 
+# Note: Vercel's serverless environment is stateless.
 # Initializing these here might lead to re-initialization on every request,
 # which can be slow. Consider lazy loading or alternative approaches if performance is critical.
 # For now, we keep it simple for compatibility.
 mp_hands = mp.solutions.hands
+# mp_drawing is not used after OpenCV removal for drawing landmarks, can be removed if not used elsewhere.
+# For now, let's keep it in case it's used by MediaPipe internally or for other solutions.
 mp_drawing = mp.solutions.drawing_utils
 
 # It's important to initialize 'hands' once, if possible.
@@ -60,13 +63,18 @@ def detect():
             return jsonify({'error': 'No image selected'}), 400
         
         img_data = file.read()
-        img = cv2.imdecode(np.frombuffer(img_data, np.uint8), cv2.IMREAD_COLOR)
-        
-        if img is None:
+        try:
+            pil_image = Image.open(io.BytesIO(img_data))
+        except Exception as e:
+            print(f"Error opening image with Pillow: {e}")
+            return jsonify({'error': 'Invalid image format or data'}), 400
+
+        if pil_image is None: # Should not happen if Image.open succeeds, but good practice
             return jsonify({'error': 'Invalid image format'}), 400
-        
+
         current_hands = get_hands_instance()
-        results = process_image(img, current_hands)
+        # Process_image will now take a PIL image and convert it to NumPy array internally
+        results = process_image(pil_image, current_hands)
         
         # Storing gesture_history in a global variable will not work reliably in a serverless environment.
         # Each invocation is stateless. This needs an external store.
@@ -86,21 +94,29 @@ def detect():
         print(f"Error in /detect: {e}")
         return jsonify({'error': str(e)}), 500
 
-def process_image(image, hands_detector):
+def process_image(pil_image, hands_detector):
     try:
-        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        results = hands_detector.process(image_rgb)
+        # Convert PIL Image to RGB if it's not already
+        pil_image_rgb = pil_image.convert('RGB')
+        
+        # Convert PIL Image to NumPy array for MediaPipe
+        # MediaPipe expects an RGB NumPy array
+        image_np_rgb = np.array(pil_image_rgb)
+        
+        # Ensure the array is C-contiguous, which is often expected by libraries like MediaPipe
+        # although for simple RGB arrays from Pillow, this might not always be strictly necessary.
+        image_np_rgb = np.ascontiguousarray(image_np_rgb)
+
+        results = hands_detector.process(image_np_rgb)
         
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
                 # Drawing on the image is not useful if we are just returning JSON.
-                # If image output is needed, it should be encoded and sent.
-                # mp_drawing.draw_landmarks(
-                #     image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
                 
                 wrist = hand_landmarks.landmark[mp_hands.HandLandmark.WRIST]
                 middle_finger_mcp = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]
-                distance = calculate_distance(wrist, middle_finger_mcp, image.shape)
+                # For image_shape, we now use the NumPy array's shape
+                distance = calculate_distance(wrist, middle_finger_mcp, image_np_rgb.shape)
                 
                 gesture = detect_gesture(hand_landmarks)
                 
@@ -220,3 +236,17 @@ if __name__ == '__main__':
     # Make sure to set the TEMPLATES_AUTO_RELOAD_DEFAULT to True for local dev if needed
     # app.config['TEMPLATES_AUTO_RELOAD'] = True
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5001)))
+
+# Note: The original app.py had:
+# if __name__ == '__main__':
+#    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+# Vercel does not use this main block. The `app` object is imported by Vercel's runtime.
+# The `debug=False` is good for production, but Vercel handles this.
+# Port is also managed by Vercel.
+# For local testing of this specific file, the __main__ block can be useful.
+# I've changed the port to 5001 to avoid conflict if the original app.py is also run.
+# Added some comments about statelessness and mediapipe initialization.
+# Corrected thumb gesture detection logic (simple version).
+# Removed mp_drawing.draw_landmarks as it modifies the image in place and we only return JSON.
+# Added a get_hands_instance() function for lazy initialization of MediaPipe Hands.
+# Changed app name to 'app' as required by Vercel.
