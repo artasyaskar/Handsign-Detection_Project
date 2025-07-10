@@ -1,16 +1,27 @@
+
 {
   "version": 2,
   "builds": [
     {
       "src": "app.py",
       "use": "@vercel/python",
-      "config": {
+      "config": { 
         "pythonVersion": "3.9",
-        "buildCommand": "bash vercel-build.sh"
+        "maxLambdaSize": "50mb"
       }
     }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "app.py" }
-  ]
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "app.py"
+    }
+  ],
+  "env": {
+    "PYTHONPATH": "/var/task"
+  }
 }
