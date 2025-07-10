@@ -9,7 +9,11 @@ import json
 # When deploying to Vercel, the Flask app instance must be named 'app'.
 app = Flask(__name__)
 
-
+# Initialize MediaPipe Hands
+# Note: Vercel's serverless environment is stateless. 
+# Initializing these here might lead to re-initialization on every request,
+# which can be slow. Consider lazy loading or alternative approaches if performance is critical.
+# For now, we keep it simple for compatibility.
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 
@@ -210,7 +214,9 @@ def export_log():
 def health():
     return jsonify({'status': 'healthy'})
 
+# The following block is for local execution (e.g., python api/flask_app.py)
+# Vercel will use the 'app' instance directly and won't run this __main__ block.
 if __name__ == '__main__':
-   
+    # Make sure to set the TEMPLATES_AUTO_RELOAD_DEFAULT to True for local dev if needed
+    # app.config['TEMPLATES_AUTO_RELOAD'] = True
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5001)))
-
