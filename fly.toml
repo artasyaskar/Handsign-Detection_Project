@@ -1,0 +1,41 @@
+# fly.toml file generated for a Flask app with Dockerfile
+
+# Replace 'your-app-name' with the unique name of your app on Fly.io
+# This will be set when you run `flyctl launch`
+app = "handsignvision-app" # Placeholder, will be updated by `flyctl launch`
+primary_region = "iad"     # Placeholder, choose your primary region during `flyctl launch`
+
+# Instruct Fly.io to build using the Dockerfile in the current directory
+[build]
+  dockerfile = "Dockerfile"
+
+# This section defines how HTTP services are handled.
+# It maps external ports 80 (HTTP) and 443 (HTTPS) to the internal port
+# your application listens on (defined by the PORT env var, typically 8080 on Fly.io).
+[http_service]
+  internal_port = 8080 # This is the port Fly.io expects your app to listen on via $PORT
+  force_https = true   # Redirect HTTP requests to HTTPS
+  auto_stop_machines = true # Automatically stop machines when idle (good for free tier)
+  auto_start_machines = true # Automatically start machines on new requests
+  min_machines_running = 0 # For free tier, allow machines to scale to zero
+  processes = ["app"]    # Matches the process group name (optional, default is "app")
+
+# Health checks for the application
+# Fly.io will use these to determine if your application is healthy.
+[[http_service.checks]]
+  grace_period = "10s" # Time to wait for app to start before first check
+  interval = "30s"     # How often to perform health checks
+  method = "GET"
+  timeout = "5s"       # How long to wait for a response
+  path = "/health"     # The path for the health check endpoint
+  protocol = "http"    # Check over HTTP (internally)
+
+# The [processes] section is optional if you only have one type of process (like "app" for web)
+# If you had background workers, you might define them here too.
+# For a simple web app, the default "app" process is usually sufficient and inferred.
+
+# Environment variables can be set here, but it's often better to set secrets
+# using `flyctl secrets set VAR=VALUE`.
+# The PORT variable is automatically set by Fly.io for your application to listen on.
+# [env]
+#   SOME_VARIABLE = "some_value"
