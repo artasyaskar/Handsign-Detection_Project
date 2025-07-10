@@ -4,7 +4,10 @@
     {
       "src": "app.py",
       "use": "@vercel/python",
-      "config": { "pythonVersion": "3.8" }
+      "config": {
+        "pythonVersion": "3.9",
+        "buildCommand": "bash vercel-build.sh"
+      }
     }
   ],
   "routes": [
