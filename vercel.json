@@ -1,16 +1,5 @@
 {
-  "builds": [
-    {
-      "src": "Dockerfile",
-      "use": "@vercel/static-build",
-      "config": { "outputDirectory": "output" }
-    }
-  ],
-  "routes": [
-    { "src": "/(.*)", "dest": "/" }
-  ],
   "env": {
     "PORT": "8080"
-  },
-  "public": true
+  }
 }
