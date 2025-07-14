@@ -128,6 +128,23 @@ def detect_gesture(hand_landmarks):
           not is_finger_open(ring_finger_tip, landmarks[mp_hands.HandLandmark.RING_FINGER_MCP]) and
           not is_finger_open(pinky_tip, landmarks[mp_hands.HandLandmark.PINKY_MCP])):
         return "Peace Sign"
+
+    elif (thumb_tip.y < index_finger_tip.y and
+          not is_finger_open(index_finger_tip, index_finger_mcp) and
+          not is_finger_open(middle_finger_tip, landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]) and
+          not is_finger_open(ring_finger_tip, landmarks[mp_hands.HandLandmark.RING_FINGER_MCP]) and
+          not is_finger_open(pinky_tip, landmarks[mp_hands.HandLandmark.PINKY_MCP])):
+        return "Thumbs Up"
+    elif (is_finger_open(middle_finger_tip, landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]) and
+          not is_finger_open(index_finger_tip, landmarks[mp_hands.HandLandmark.INDEX_FINGER_MCP]) and
+          not is_finger_open(ring_finger_tip, landmarks[mp_hands.HandLandmark.RING_FINGER_MCP]) and
+          not is_finger_open(pinky_tip, landmarks[mp_hands.HandLandmark.PINKY_MCP])):
+        return "Fucked up🖕"
+    elif (is_finger_open(index_finger_tip, index_finger_mcp) and
+          not is_finger_open(middle_finger_tip, landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]) and
+          not is_finger_open(ring_finger_tip, landmarks[mp_hands.HandLandmark.RING_FINGER_MCP]) and
+          not is_finger_open(pinky_tip, landmarks[mp_hands.HandLandmark.PINKY_MCP])):
+        return "Pointing"
         
     return "Gesture Detected"
 
@@ -145,4 +162,6 @@ def export_log():
     )
 
 if __name__ == '__main__':
+    # Run the app for local development
+    # Vercel will use a WSGI server and not this block
     app.run(debug=True, host='0.0.0.0', port=5000)
