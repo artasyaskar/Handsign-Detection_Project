@@ -93,8 +93,42 @@ def calculate_distance(wrist, mcp, image_shape):
     return round(distance_cm, 1)
 
 def detect_gesture(hand_landmarks):
-    # This is a placeholder for your gesture recognition logic
-    # You would implement a more sophisticated method here
+    # Get the coordinates of all landmarks
+    landmarks = hand_landmarks.landmark
+    
+    # Landmark indices for fingertips and other key points
+    thumb_tip = landmarks[mp_hands.HandLandmark.THUMB_TIP]
+    index_finger_tip = landmarks[mp_hands.HandLandmark.INDEX_FINGER_TIP]
+    middle_finger_tip = landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_TIP]
+    ring_finger_tip = landmarks[mp_hands.HandLandmark.RING_FINGER_TIP]
+    pinky_tip = landmarks[mp_hands.HandLandmark.PINKY_TIP]
+    
+    wrist = landmarks[mp_hands.HandLandmark.WRIST]
+    index_finger_mcp = landmarks[mp_hands.HandLandmark.INDEX_FINGER_MCP]
+    
+    # Helper function to check if a finger is open
+    def is_finger_open(tip, mcp):
+        return tip.y < mcp.y
+
+    # Gesture detection logic
+    if (is_finger_open(index_finger_tip, index_finger_mcp) and
+        is_finger_open(middle_finger_tip, landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]) and
+        is_finger_open(ring_finger_tip, landmarks[mp_hands.HandLandmark.RING_FINGER_MCP]) and
+        is_finger_open(pinky_tip, landmarks[mp_hands.HandLandmark.PINKY_MCP])):
+        return "Open Hand"
+    
+    elif (not is_finger_open(index_finger_tip, index_finger_mcp) and
+          not is_finger_open(middle_finger_tip, landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]) and
+          not is_finger_open(ring_finger_tip, landmarks[mp_hands.HandLandmark.RING_FINGER_MCP]) and
+          not is_finger_open(pinky_tip, landmarks[mp_hands.HandLandmark.PINKY_MCP])):
+        return "Closed Fist"
+
+    elif (is_finger_open(index_finger_tip, index_finger_mcp) and
+          is_finger_open(middle_finger_tip, landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]) and
+          not is_finger_open(ring_finger_tip, landmarks[mp_hands.HandLandmark.RING_FINGER_MCP]) and
+          not is_finger_open(pinky_tip, landmarks[mp_hands.HandLandmark.PINKY_MCP])):
+        return "Peace Sign"
+        
     return "Gesture Detected"
 
 @app.route('/export-log')
@@ -111,6 +145,4 @@ def export_log():
     )
 
 if __name__ == '__main__':
-    # Run the app for local development
-    # Vercel will use a WSGI server and not this block
     app.run(debug=True, host='0.0.0.0', port=5000)
