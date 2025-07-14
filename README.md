@@ -1,151 +1,118 @@
 # HandsignVision
 
-An AI-powered web application for hand gesture detection from uploaded images using computer vision.
+An AI-powered web application for real-time hand gesture detection and distance estimation using computer vision.
 
 ## Features
 
-- Hand gesture detection from uploaded images using MediaPipe
-- Simplified hand distance estimation from image analysis
-- Gesture history with timestamps for the current session
+- Real-time hand gesture detection using MediaPipe
+- Hand distance estimation from the camera
+- Gesture history with timestamps
 - Export gesture logs to CSV
-- Clean and responsive user interface
+- Modern, responsive UI with dark theme
+- WebRTC for browser-based camera access
 
-## Core Technologies
+## Prerequisites
 
-- **Backend:** Python, Flask
-- **Computer Vision:** OpenCV, MediaPipe
-- **Frontend:** HTML, CSS, JavaScript
-- **Deployment:** Docker, Render
-
-## Prerequisites for Local Development
-
-- Python 3.9+ (as per Dockerfile)
+- Python 3.8+
 - pip (Python package manager)
-- A modern web browser
+- Modern web browser with WebRTC support (Chrome, Firefox, Edge)
+- Webcam
 
-## Local Development Setup
+## Installation
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <your-repository-url>
-    cd <your-repository-folder-name> # e.g., HandsignVision
-    ```
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd Handsign_Detection.Project
+   ```
 
-2.  **Create and activate a virtual environment (recommended):**
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows: .\venv\Scripts\activate
-    ```
+2. Create a virtual environment (recommended):
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: .\\venv\\Scripts\\activate
+   ```
 
-3.  **Install dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-4.  **Run the Flask development server:**
-    ```bash
-    python app.py
-    ```
-    The application will be accessible at `http://127.0.0.1:5000`.
+## Running the Application
 
-## Running with Docker Locally
+### Development Mode
 
-This project includes a `Dockerfile` for containerized deployment.
+1. Start the Flask development server:
+   ```bash
+   python app.py
+   ```
 
-1.  **Build the Docker image:**
-    ```bash
-    docker build -t handsignvision .
-    ```
+2. Open your web browser and navigate to:
+   ```
+   http://localhost:5000
+   ```
 
-2.  **Run the Docker container:**
-    ```bash
-    # The application inside Docker will listen on the port specified by the PORT env var.
-    # Gunicorn in the Dockerfile uses $PORT.
-    # For local testing, you can set this to any port, e.g., 5000 or 8080.
-    docker run -p 5000:5000 -e PORT=5000 handsignvision
-    ```
-    The application will then be accessible at `http://localhost:5000`.
-    Or, if you prefer to use port 8080 locally:
-    ```bash
-    docker run -p 8080:8080 -e PORT=8080 handsignvision
-    ```
-    And access it at `http://localhost:8080`. Render will provide its own `PORT` variable during deployment.
+### Using Docker
 
-## Deployment to Render
+1. Build the Docker image:
+   ```bash
+   docker build -t handsignvision .
+   ```
 
-This application can be deployed to [Render](https://render.com/) using its Git integration and Docker support. The `render.yaml` file in this repository can be used for "Blueprint" deployments.
+2. Run the container:
+   ```bash
+   docker run -p 5000:5000 --device=/dev/video0 handsignvision
+   ```
 
-**Steps to Deploy:**
-
-1.  **Push your code to a GitHub (or GitLab) repository.**
-
-2.  **On Render Dashboard:**
-    *   Sign up or log in to Render.
-    *   Click "New +" and select "Blueprint".
-    *   Connect your GitHub/GitLab account and select the repository for this project.
-    *   Render will detect the `render.yaml` file. Review the services it plans to create.
-    *   Click "Approve" or "Create New Services".
-    *   Alternatively, you can create a "New Web Service" manually:
-        *   Connect your repository.
-        *   Choose a unique name for your service.
-        *   Set the Environment to "Docker".
-        *   Select a region.
-        *   Choose an instance type (e.g., "Free").
-        *   Under "Advanced Settings", you might need to set a Health Check Path to `/health`.
-        *   Click "Create Web Service".
-
-3.  **Automatic Deployments:**
-    *   Render can automatically build and deploy your application when you push changes to your connected repository branch (typically `main`).
-
-4.  **Access Your Application:**
-    *   Once deployed, Render will provide you with a public URL (e.g., `https://your-service-name.onrender.com`).
-
-Refer to the `Dockerfile` and `render.yaml` for deployment configurations. Render injects a `PORT` environment variable which Gunicorn uses.
+3. Open your web browser and navigate to:
+   ```
+   http://localhost:5000
+   ```
 
 ## Project Structure
 
 ```
-.
-├── static/               # Static files (CSS, JS)
-│   ├── css/styles.css
-│   └── js/main.js
-├── templates/            # HTML templates (index.html)
-├── app.py                # Main Flask application file
+HandsignVision/
+├── static/               # Static files (CSS, JS, images)
+│   ├── css/
+│   └── js/
+├── templates/            # HTML templates
+├── app.py                # Main application file
 ├── requirements.txt      # Python dependencies
-├── Dockerfile            # Docker configuration for Render/local
-├── render.yaml           # Render Blueprint configuration
-└── README.md             # This file
+└── Dockerfile            # Docker configuration
 ```
 
-## How it Works (Image Upload Version)
+## Usage
 
-1.  The user uploads an image through the web interface.
-2.  The Flask backend receives the image.
-3.  OpenCV and MediaPipe process the image to detect hand landmarks.
-4.  A simple gesture recognition logic determines the gesture.
-5.  Results (gesture, distance, landmarks) are sent back to the frontend and displayed.
-6.  Detected gestures are logged and can be exported.
+1. Click "Start Camera" to begin capturing video from your webcam.
+2. Show your hand to the camera to detect gestures.
+3. View detected gestures and hand distance in the interface.
+4. Use the "Export Log" button to download a CSV of detected gestures.
 
 ## Customization
 
-### Gesture Logic
-- Modify the `detect_gesture()` function in `app.py` to change or enhance gesture recognition.
+### Adding New Gestures
+
+To add new gesture detection:
+
+1. Modify the `detect_gesture()` function in `app.py` to recognize new hand landmarks patterns.
+2. Add corresponding UI elements in `templates/index.html` if needed.
 
 ### Styling
-- Customize the look and feel by modifying `static/css/styles.css` and `templates/index.html`.
+
+Customize the look and feel by modifying the CSS in `static/css/styles.css`.
 
 ## Troubleshooting
 
-- **Deployment Issues on Render:** Check the build and deployment logs in the Render dashboard for your service. Ensure system dependencies in the `Dockerfile` are correctly installed. Verify the Health Check Path is correctly set if not using `render.yaml`.
-- **Local Docker Issues:** Ensure Docker Desktop (or your Docker environment) is running.
-- **Free Tier Limitations on Render:** Free web services on Render spin down due to inactivity and may take some time to restart on a new request. They also have usage limits.
+- **Webcam not working**: Ensure you've granted camera permissions in your browser.
+- **Installation issues**: Make sure all dependencies are installed correctly.
+- **Performance issues**: Try reducing the video resolution in the code for better performance.
 
 ## License
 
-This project is licensed under the MIT License. (Assuming MIT, update if different)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
 - [MediaPipe](https://mediapipe.dev/) for hand tracking
 - [Flask](https://flask.palletsprojects.com/) for the web framework
-```
+- [Tailwind CSS](https://tailwindcss.com/) for styling
