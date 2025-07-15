@@ -93,60 +93,141 @@ def calculate_distance(wrist, mcp, image_shape):
     return round(distance_cm, 1)
 
 def detect_gesture(hand_landmarks):
-    # Get the coordinates of all landmarks
     landmarks = hand_landmarks.landmark
-    
-    # Landmark indices for fingertips and other key points
+
+    # Landmark aliases
     thumb_tip = landmarks[mp_hands.HandLandmark.THUMB_TIP]
-    index_finger_tip = landmarks[mp_hands.HandLandmark.INDEX_FINGER_TIP]
-    middle_finger_tip = landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_TIP]
-    ring_finger_tip = landmarks[mp_hands.HandLandmark.RING_FINGER_TIP]
+    thumb_mcp = landmarks[mp_hands.HandLandmark.THUMB_MCP]
+    
+    index_tip = landmarks[mp_hands.HandLandmark.INDEX_FINGER_TIP]
+    index_mcp = landmarks[mp_hands.HandLandmark.INDEX_FINGER_MCP]
+    
+    middle_tip = landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_TIP]
+    middle_mcp = landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]
+    
+    ring_tip = landmarks[mp_hands.HandLandmark.RING_FINGER_TIP]
+    ring_mcp = landmarks[mp_hands.HandLandmark.RING_FINGER_MCP]
+    
     pinky_tip = landmarks[mp_hands.HandLandmark.PINKY_TIP]
-    
-    wrist = landmarks[mp_hands.HandLandmark.WRIST]
-    index_finger_mcp = landmarks[mp_hands.HandLandmark.INDEX_FINGER_MCP]
-    
-    # Helper function to check if a finger is open
+    pinky_mcp = landmarks[mp_hands.HandLandmark.PINKY_MCP]
+
+    # Helper to check if a finger is extended
     def is_finger_open(tip, mcp):
         return tip.y < mcp.y
 
-    # Gesture detection logic
-    if (is_finger_open(index_finger_tip, index_finger_mcp) and
-        is_finger_open(middle_finger_tip, landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]) and
-        is_finger_open(ring_finger_tip, landmarks[mp_hands.HandLandmark.RING_FINGER_MCP]) and
-        is_finger_open(pinky_tip, landmarks[mp_hands.HandLandmark.PINKY_MCP])):
-        return "Open Hand"
-    
-    elif (not is_finger_open(index_finger_tip, index_finger_mcp) and
-          not is_finger_open(middle_finger_tip, landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]) and
-          not is_finger_open(ring_finger_tip, landmarks[mp_hands.HandLandmark.RING_FINGER_MCP]) and
-          not is_finger_open(pinky_tip, landmarks[mp_hands.HandLandmark.PINKY_MCP])):
-        return "Closed Fist"
+    # Gesture logic functions
+    def is_open_palm():
+        return all(is_finger_open(t, m) for t, m in [
+            (thumb_tip, thumb_mcp),
+            (index_tip, index_mcp),
+            (middle_tip, middle_mcp),
+            (ring_tip, ring_mcp),
+            (pinky_tip, pinky_mcp)
+        ])
 
-    elif (is_finger_open(index_finger_tip, index_finger_mcp) and
-          is_finger_open(middle_finger_tip, landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]) and
-          not is_finger_open(ring_finger_tip, landmarks[mp_hands.HandLandmark.RING_FINGER_MCP]) and
-          not is_finger_open(pinky_tip, landmarks[mp_hands.HandLandmark.PINKY_MCP])):
-        return "Peace Sign"
+    def is_fist():
+        return all(not is_finger_open(t, m) for t, m in [
+            (thumb_tip, thumb_mcp),
+            (index_tip, index_mcp),
+            (middle_tip, middle_mcp),
+            (ring_tip, ring_mcp),
+            (pinky_tip, pinky_mcp)
+        ])
 
-    elif (thumb_tip.y < index_finger_tip.y and
-          not is_finger_open(index_finger_tip, index_finger_mcp) and
-          not is_finger_open(middle_finger_tip, landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]) and
-          not is_finger_open(ring_finger_tip, landmarks[mp_hands.HandLandmark.RING_FINGER_MCP]) and
-          not is_finger_open(pinky_tip, landmarks[mp_hands.HandLandmark.PINKY_MCP])):
-        return "Thumbs Up"
-    elif (is_finger_open(middle_finger_tip, landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]) and
-          not is_finger_open(index_finger_tip, landmarks[mp_hands.HandLandmark.INDEX_FINGER_MCP]) and
-          not is_finger_open(ring_finger_tip, landmarks[mp_hands.HandLandmark.RING_FINGER_MCP]) and
-          not is_finger_open(pinky_tip, landmarks[mp_hands.HandLandmark.PINKY_MCP])):
-        return "Fucked up🖕"
-    elif (is_finger_open(index_finger_tip, index_finger_mcp) and
-          not is_finger_open(middle_finger_tip, landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]) and
-          not is_finger_open(ring_finger_tip, landmarks[mp_hands.HandLandmark.RING_FINGER_MCP]) and
-          not is_finger_open(pinky_tip, landmarks[mp_hands.HandLandmark.PINKY_MCP])):
-        return "Pointing"
-        
-    return "Gesture Detected"
+    def is_peace_sign():
+        return (is_finger_open(index_tip, index_mcp) and
+                is_finger_open(middle_tip, middle_mcp) and
+                not is_finger_open(ring_tip, ring_mcp) and
+                not is_finger_open(pinky_tip, pinky_mcp))
+
+    def is_pointing():
+        return (is_finger_open(index_tip, index_mcp) and
+                not is_finger_open(middle_tip, middle_mcp) and
+                not is_finger_open(ring_tip, ring_mcp) and
+                not is_finger_open(pinky_tip, pinky_mcp))
+
+    def is_thumb_up():
+        return (thumb_tip.y < thumb_mcp.y and
+                all(not is_finger_open(t, m) for t, m in [
+                    (index_tip, index_mcp),
+                    (middle_tip, middle_mcp),
+                    (ring_tip, ring_mcp),
+                    (pinky_tip, pinky_mcp)
+                ]))
+
+    def is_thumb_down():
+        return (thumb_tip.y > thumb_mcp.y and
+                all(not is_finger_open(t, m) for t, m in [
+                    (index_tip, index_mcp),
+                    (middle_tip, middle_mcp),
+                    (ring_tip, ring_mcp),
+                    (pinky_tip, pinky_mcp)
+                ]))
+
+    def is_call_me():
+        return (is_finger_open(thumb_tip, thumb_mcp) and
+                is_finger_open(pinky_tip, pinky_mcp) and
+                all(not is_finger_open(t, m) for t, m in [
+                    (index_tip, index_mcp),
+                    (middle_tip, middle_mcp),
+                    (ring_tip, ring_mcp)
+                ]))
+
+    def is_rock_sign():
+        return (is_finger_open(index_tip, index_mcp) and
+                is_finger_open(pinky_tip, pinky_mcp) and
+                not is_finger_open(middle_tip, middle_mcp) and
+                not is_finger_open(ring_tip, ring_mcp))
+
+    def is_middle_finger():
+        return (is_finger_open(middle_tip, middle_mcp) and
+                not is_finger_open(index_tip, index_mcp) and
+                not is_finger_open(ring_tip, ring_mcp) and
+                not is_finger_open(pinky_tip, pinky_mcp))
+
+    def is_ok_sign():
+        dist_thumb_index = ((thumb_tip.x - index_tip.x)**2 + (thumb_tip.y - index_tip.y)**2)**0.5
+        return dist_thumb_index < 0.05 and all(
+            is_finger_open(t, m) for t, m in [
+                (middle_tip, middle_mcp),
+                (ring_tip, ring_mcp),
+                (pinky_tip, pinky_mcp)
+            ])
+
+    def is_fingers_crossed():
+        return (is_finger_open(index_tip, index_mcp) and
+                is_finger_open(middle_tip, middle_mcp) and
+                abs(index_tip.x - middle_tip.x) < 0.02)
+
+    def is_i_love_you():
+        return (is_finger_open(thumb_tip, thumb_mcp) and
+                is_finger_open(index_tip, index_mcp) and
+                not is_finger_open(middle_tip, middle_mcp) and
+                not is_finger_open(ring_tip, ring_mcp) and
+                is_finger_open(pinky_tip, pinky_mcp))
+
+    # Matching known gestures
+    if is_open_palm(): return "🖐️ Open Hand"
+    if is_fist(): return "✊ Fist"
+    if is_peace_sign(): return "✌️ Peace"
+    if is_pointing(): return "👉 Pointing"
+    if is_thumb_up(): return "👍 Thumbs Up"
+    if is_thumb_down(): return "👎 Thumbs Down"
+    if is_call_me(): return "🤙 Call Me"
+    if is_rock_sign(): return "🤘 Rock"
+    if is_middle_finger(): return "🖕Fuck You"
+    if is_ok_sign(): return "👌 OK Sign"
+    if is_fingers_crossed(): return "🤞 Fingers Crossed"
+    if is_i_love_you(): return "🤟 I Love You"
+
+    if (is_finger_open(middle_tip, middle_mcp) and
+        not is_finger_open(index_tip, index_mcp) and
+        not is_finger_open(ring_tip, ring_mcp) and
+        not is_finger_open(pinky_tip, pinky_mcp)):
+        return "🖕Fuck You"
+
+    return "🤷 Gesture Detected"
+
 
 @app.route('/export-log')
 def export_log():
