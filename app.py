@@ -3,6 +3,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import os
+import base64
 from datetime import datetime
 import json
 
@@ -27,54 +28,170 @@ def index():
 
 @app.route('/detect', methods=['POST'])
 def detect():
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image provided'}), 400
-    
-    file = request.files['image']
-    img = cv2.imdecode(np.frombuffer(file.read(), np.uint8), cv2.IMREAD_COLOR)
-    
-    # Process the image with MediaPipe
-    results = process_image(img)
-    
-    # Add to history
-    if results and 'gesture' in results:
-        gesture_history.append({
-            'gesture': results['gesture'],
+    try:
+        if 'image' not in request.files:
+            print("No image file in request")
+            return jsonify({'error': 'No image provided'}), 400
+        
+        file = request.files['image']
+        img_data = file.read()
+        
+        if not img_data:
+            print("Received empty image data")
+            return jsonify({'error': 'Empty image data'}), 400
+            
+        img = cv2.imdecode(np.frombuffer(img_data, np.uint8), cv2.IMREAD_COLOR)
+        
+        if img is None:
+            print("Failed to decode image")
+            return jsonify({'error': 'Failed to decode image'}), 400
+            
+        print(f"Processing image of size: {img.shape}")
+        
+        # Process the image with MediaPipe
+        results = process_image(img)
+        
+        if 'error' in results:
+            print(f"Error in process_image: {results['error']}")
+            return jsonify({'error': results['error']}), 500
+        
+        # Add to history
+        if results and 'gesture' in results:
+            gesture_history.append({
+                'gesture': results['gesture'],
+                'distance': results.get('distance', 0),
+                'timestamp': datetime.now().isoformat()
+            })
+            # Keep only the last N entries
+            if len(gesture_history) > MAX_HISTORY:
+                gesture_history.pop(0)
+        
+        # Prepare response
+        response = {
+            'gesture': results.get('gesture', 'No gesture'),
             'distance': results.get('distance', 0),
-            'timestamp': datetime.now().isoformat()
-        })
-        # Keep only the last N entries
-        if len(gesture_history) > MAX_HISTORY:
-            gesture_history.pop(0)
-    
-    return jsonify(results)
+            'hand_landmarks': results.get('hand_landmarks', [])
+        }
+        
+        # If we have a processed image, include it in the response
+        if 'processed_image' in results:
+            response['processed_image'] = results['processed_image']
+            print(f"Sending response with processed image (size: {len(results['processed_image'])} chars)")
+        else:
+            print("No processed image in results")
+        
+        return jsonify(response)
+        
+    except Exception as e:
+        print(f"Error in /detect endpoint: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
 
 def process_image(image):
-    # Convert the BGR image to RGB and process it with MediaPipe
-    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    results = hands.process(image_rgb)
-    
-    # Draw hand landmarks
-    if results.multi_hand_landmarks:
-        for hand_landmarks in results.multi_hand_landmarks:
-            mp_drawing.draw_landmarks(
-                image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+    try:
+        # Create a copy of the original image for processing
+        original_image = image.copy()
+        
+        # Convert the BGR image to RGB and process it with MediaPipe
+        image_rgb = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
+        results = hands.process(image_rgb)
+        
+        # Create a black mask for the hand region
+        mask = np.zeros(original_image.shape[:2], dtype=np.uint8)
+        
+        if results.multi_hand_landmarks:
+            # Create a blank black image for drawing
+            result = np.zeros_like(original_image)
             
-            # Calculate hand distance (simplified)
-            wrist = hand_landmarks.landmark[mp_hands.HandLandmark.WRIST]
-            middle_finger_mcp = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]
-            distance = calculate_distance(wrist, middle_finger_mcp, image.shape)
-            
-            # Here you would add your gesture recognition logic
-            gesture = detect_gesture(hand_landmarks)
-            
-            return {
-                'gesture': gesture,
-                'distance': distance,
-                'hand_landmarks': [{'x': lm.x, 'y': lm.y, 'z': lm.z} 
-                                 for lm in hand_landmarks.landmark]
-            }
-    return {}
+            for hand_landmarks in results.multi_hand_landmarks:
+                # Get hand landmarks as numpy array for easier processing
+                h, w = original_image.shape[:2]
+                landmarks = np.array([(int(lm.x * w), int(lm.y * h)) 
+                                   for lm in hand_landmarks.landmark], dtype=np.int32)
+                
+                # Create a convex hull around the hand with padding
+                hull = cv2.convexHull(landmarks)
+                
+                # Add padding to the convex hull
+                padding = 30
+                rect = cv2.boundingRect(hull)
+                x, y, w, h = rect
+                center = (x + w//2, y + h//2)
+                
+                # Create a larger mask for the hand region
+                mask = np.zeros(original_image.shape[:2], dtype=np.uint8)
+                cv2.drawContours(mask, [hull], -1, 255, -1)
+                
+                # Apply morphological operations to smooth the mask
+                kernel = np.ones((15, 15), np.uint8)
+                mask = cv2.dilate(mask, kernel, iterations=1)
+                mask = cv2.GaussianBlur(mask, (25, 25), 0)
+                
+                # Create a 3-channel mask
+                mask_3ch = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+                mask_3ch = mask_3ch.astype(float) / 255.0
+                
+                # Apply heavy blur to the original image
+                kernel_size = max(51, min(original_image.shape[0], original_image.shape[1]) // 8 | 1)  # Ensure odd number
+                blurred_bg = cv2.GaussianBlur(original_image, (kernel_size, kernel_size), 0)
+                
+                # Blend images using the mask
+                result = (original_image * mask_3ch + blurred_bg * (1 - mask_3ch)).astype(np.uint8)
+                
+                # Draw hand skeleton with enhanced visualization
+                mp_drawing.draw_landmarks(
+                    result,
+                    hand_landmarks,
+                    mp_hands.HAND_CONNECTIONS,
+                    mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=4, circle_radius=6),  # Landmarks
+                    mp_drawing.DrawingSpec(color=(255, 0, 0), thickness=4)  # Connections
+                )
+                
+                # Draw finger tips with numbers
+                for idx, landmark in enumerate(hand_landmarks.landmark):
+                    if idx in [4, 8, 12, 16, 20]:  # Fingertip landmarks
+                        x, y = int(landmark.x * w), int(landmark.y * h)
+                        cv2.circle(result, (x, y), 8, (0, 0, 255), -1)
+                        cv2.putText(result, str(idx), (x - 5, y + 5),
+                                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                
+                # Calculate hand distance
+                wrist = hand_landmarks.landmark[mp_hands.HandLandmark.WRIST]
+                middle_finger_mcp = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]
+                distance = calculate_distance(wrist, middle_finger_mcp, image.shape)
+                
+                # Detect gesture
+                gesture = detect_gesture(hand_landmarks)
+                
+                # Encode the result image as base64
+                _, buffer = cv2.imencode('.jpg', cv2.cvtColor(result, cv2.COLOR_BGR2RGB), 
+                                      [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+                processed_image = base64.b64encode(buffer).decode('utf-8')
+                
+                return {
+                    'gesture': gesture,
+                    'distance': distance,
+                    'hand_landmarks': [{'x': lm.x, 'y': lm.y, 'z': lm.z} 
+                                     for lm in hand_landmarks.landmark],
+                    'processed_image': processed_image
+                }
+        
+        # If no hands detected, return the blurred image
+        blurred_bg = cv2.GaussianBlur(original_image, (99, 99), 0)
+        _, buffer = cv2.imencode('.jpg', blurred_bg)
+        processed_image = base64.b64encode(buffer).decode('utf-8')
+        
+        return {
+            'gesture': 'No hand detected',
+            'distance': 0,
+            'hand_landmarks': [],
+            'processed_image': processed_image
+        }
+        
+    except Exception as e:
+        print(f"Error in process_image: {str(e)}")
+        return {'error': str(e)}
 
 def calculate_distance(wrist, mcp, image_shape):
     # Simple distance estimation based on hand size in the image

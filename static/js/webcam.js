@@ -74,9 +74,6 @@ async function processVideo() {
     
     // Process the frame
     try {
-        // Draw video to canvas
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
         // Don't send a new request if the previous one is still processing
         if (isProcessing) {
             animationFrameId = requestAnimationFrame(processVideo);
@@ -85,8 +82,15 @@ async function processVideo() {
 
         isProcessing = true;
 
+        // Draw video to a temporary canvas to get the frame
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = video.videoWidth;
+        tempCanvas.height = video.videoHeight;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+        
         // Get image data and send to server for processing
-        const imageData = canvas.toDataURL('image/jpeg', 0.8);
+        const imageData = tempCanvas.toDataURL('image/jpeg', 0.8);
         const blob = await (await fetch(imageData)).blob();
         const formData = new FormData();
         formData.append('image', blob, 'frame.jpg');
@@ -98,8 +102,53 @@ async function processVideo() {
         
         const result = await response.json();
         
-        // If a gesture is detected, record and update UI
-        if (result && result.gesture) {
+        // Clear the canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // If we have a processed image from the server, display it
+        if (result.processed_image) {
+            const img = new Image();
+            img.onload = function() {
+                // Draw the processed image
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            };
+            img.src = 'data:image/jpeg;base64,' + result.processed_image;
+        } else {
+            // Fallback: draw the original video frame
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        }
+        
+        // If we received a processed image from the server, display it
+        if (result.processed_image) {
+            // Create a new image element to load the processed image
+            const img = new Image();
+            
+            img.onload = () => {
+                try {
+                    // Clear the canvas and draw the processed image
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // If a gesture is detected, record and update UI
+                    if (result && result.gesture) {
+                        recordDetection(result);
+                        updateUI(result, getStats());
+                    }
+                } catch (e) {
+                    console.error('Error drawing image:', e);
+                }
+            };
+            
+            img.onerror = (e) => {
+                console.error('Error loading processed image:', e);
+                console.log('Image source:', 'data:image/jpeg;base64,' + result.processed_image.substring(0, 50) + '...');
+                isProcessing = false;
+            };
+            
+            // Set the source after setting up the event handlers
+            img.src = 'data:image/jpeg;base64,' + result.processed_image;
+        } else if (result && result.gesture) {
+            // Fallback: If no processed image but we have a gesture, update UI normally
             recordDetection(result);
             updateUI(result, getStats());
         }
