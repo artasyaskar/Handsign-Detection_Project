@@ -156,10 +156,8 @@ def process_image(image):
                         cv2.putText(result, str(idx), (x - 5, y + 5),
                                  cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                 
-                # Calculate hand distance
-                wrist = hand_landmarks.landmark[mp_hands.HandLandmark.WRIST]
-                middle_finger_mcp = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]
-                distance = calculate_distance(wrist, middle_finger_mcp, image.shape)
+                # Calculate hand distance using the improved method
+                distance = calculate_distance(hand_landmarks, image.shape)
                 
                 # Detect gesture
                 gesture = detect_gesture(hand_landmarks)
@@ -193,21 +191,46 @@ def process_image(image):
         print(f"Error in process_image: {str(e)}")
         return {'error': str(e)}
 
-def calculate_distance(wrist, mcp, image_shape):
-    # Simple distance estimation based on hand size in the image
-    # This is a simplified version - you might want to implement a more accurate method
+def calculate_distance(hand_landmarks, image_shape):
+    """
+    Calculate the distance from the camera to the hand using the hand's width.
+    
+    Args:
+        hand_landmarks: MediaPipe hand landmarks
+        image_shape: Shape of the image (height, width)
+        
+    Returns:
+        Distance in centimeters
+    """
+    # Get the width of the hand (distance between wrist and middle finger MCP)
+    wrist = hand_landmarks.landmark[mp_hands.HandLandmark.WRIST]
+    mcp = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]
+    
+    # Convert normalized coordinates to pixel values
     image_height, image_width = image_shape[:2]
     wrist_x, wrist_y = int(wrist.x * image_width), int(wrist.y * image_height)
     mcp_x, mcp_y = int(mcp.x * image_width), int(mcp.y * image_height)
     
-    # Calculate distance in pixels
-    distance_px = ((wrist_x - mcp_x) ** 2 + (wrist_y - mcp_y) ** 2) ** 0.5
+    # Calculate hand width in pixels (Euclidean distance)
+    hand_width_px = ((wrist_x - mcp_x) ** 2 + (wrist_y - mcp_y) ** 2) ** 0.5
     
-    # Convert to cm (this is a rough estimation)
-    # You would need to calibrate this based on your camera and typical hand sizes
-    distance_cm = distance_px * 0.1  # Adjust this factor based on your needs
+    # Known average hand width in cm (from wrist to middle finger MCP)
+    # This is an average value - you might need to adjust based on your hand size
+    ACTUAL_HAND_WIDTH_CM = 8.0  # cm
     
-    return round(distance_cm, 1)
+    # Focal length estimation (you may need to calibrate this for your camera)
+    # Formula: distance = (actual_width * focal_length) / width_in_pixels
+    # For a typical webcam, focal length is approximately image_width * 1.2
+    focal_length = image_width * 1.2
+    
+    # Calculate distance using the pinhole camera model
+    if hand_width_px > 0:
+        distance_cm = (ACTUAL_HAND_WIDTH_CM * focal_length) / hand_width_px
+        # Apply smoothing and constraints
+        distance_cm = max(10, min(100, distance_cm))  # Limit between 10cm and 100cm
+        return round(distance_cm, 1)
+    
+    return 0
 
 def detect_gesture(hand_landmarks):
     landmarks = hand_landmarks.landmark
